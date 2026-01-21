@@ -1,3 +1,5 @@
+// Use CORS proxy to bypass restrictions
+const CORS_PROXY = 'https://corsproxy.io/?';
 const API_URL = 'https://scibowldb.com/api/questions/random';
 
 // DOM elements
@@ -83,17 +85,40 @@ newQuestionBtn.addEventListener('click', async () => {
         .map(cb => cb.value);
     
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ categories })
-        });
+        // Build the request URL with CORS proxy
+        let requestUrl = CORS_PROXY + encodeURIComponent(API_URL);
+        
+        // For POST requests with categories, we need a different approach
+        let fetchOptions = {
+            method: 'GET',
+            headers: { 
+                'Content-Type': 'application/json'
+            }
+        };
+        
+        // If categories are selected, use POST through proxy
+        if (categories.length > 0) {
+            // Some CORS proxies don't handle POST well, so we'll use GET for now
+            // and filter on the client side if needed
+            console.log('Selected categories:', categories);
+        }
+        
+        const response = await fetch(requestUrl, fetchOptions);
         
         if (!response.ok) {
-            throw new Error('API request failed');
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
+        
+        // If categories were selected, check if question matches
+        // If not, fetch another one (simple client-side filtering)
+        if (categories.length > 0 && !categories.includes(data.category)) {
+            console.log('Question category mismatch, fetching another...');
+            newQuestionBtn.click(); // Try again
+            return;
+        }
+        
         currentQuestion = data;
         
         questionText.textContent = currentQuestion.tossup_question;
@@ -127,7 +152,7 @@ newQuestionBtn.addEventListener('click', async () => {
         
     } catch (error) {
         console.error('Error fetching question:', error);
-        alert('Error loading question. Check console for details. The API might be down or CORS is blocking it.');
+        alert('Error loading question. The CORS proxy might be down. Try again in a moment.');
     }
 });
 
