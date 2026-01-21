@@ -1,0 +1,199 @@
+const API_URL = 'https://scibowldb.com/api/questions/random';
+
+// DOM elements
+const questionText = document.getElementById('questionText');
+const questionCategory = document.getElementById('questionCategory');
+const questionNum = document.getElementById('questionNum');
+const correctAnswer = document.getElementById('correctAnswer');
+const playerAnswer = document.getElementById('playerAnswer');
+const answerSection = document.getElementById('answerSection');
+const buzzedPlayer = document.getElementById('buzzedPlayer');
+
+const newQuestionBtn = document.getElementById('newQuestion');
+const activateBuzzerBtn = document.getElementById('activateBuzzer');
+const markCorrectBtn = document.getElementById('markCorrect');
+const markIncorrectBtn = document.getElementById('markIncorrect');
+const showAnswerBtn = document.getElementById('showAnswer');
+const resetGameBtn = document.getElementById('resetGame');
+
+let currentQuestion = null;
+let currentQuestionNumber = 1;
+let currentBuzzedPlayer = null;
+
+// Initialize game state
+database.ref('gameState').set({
+    buzzerActive: false,
+    currentQuestion: null,
+    scores: {
+        player1: 0,
+        player2: 0,
+        player3: 0,
+        player4: 0
+    },
+    questionNumber: 1
+});
+
+// Listen for game state changes
+database.ref('gameState').on('value', (snapshot) => {
+    const state = snapshot.val();
+    if (!state) return;
+    
+    // Update scores
+    document.getElementById('score1').textContent = state.scores.player1 || 0;
+    document.getElementById('score2').textContent = state.scores.player2 || 0;
+    document.getElementById('score3').textContent = state.scores.player3 || 0;
+    document.getElementById('score4').textContent = state.scores.player4 || 0;
+    
+    // Update buzzer lights
+    if (state.buzzer && state.buzzer.playerId) {
+        const playerNum = state.buzzer.playerId.replace('player', '');
+        currentBuzzedPlayer = state.buzzer.playerId;
+        
+        // Light up the buzzer
+        document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+        document.getElementById(`light${playerNum}`).classList.add('active');
+        
+        buzzedPlayer.textContent = `Player ${playerNum} buzzed in!`;
+        
+        // Show grading buttons
+        markCorrectBtn.style.display = 'inline-block';
+        markIncorrectBtn.style.display = 'inline-block';
+        showAnswerBtn.style.display = 'inline-block';
+    }
+    
+    // Update player answer
+    if (state.playerAnswer) {
+        playerAnswer.textContent = state.playerAnswer.answer;
+        answerSection.style.display = 'block';
+    }
+});
+
+// Fetch new question
+newQuestionBtn.addEventListener('click', async () => {
+    const categories = Array.from(document.querySelectorAll('.category-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categories })
+        });
+        
+        const data = await response.json();
+        currentQuestion = data;
+        
+        questionText.textContent = currentQuestion.tossup_question;
+        questionCategory.textContent = currentQuestion.category;
+        correctAnswer.textContent = currentQuestion.tossup_answer;
+        questionNum.textContent = currentQuestionNumber;
+        
+        // Update Firebase
+        database.ref('gameState').update({
+            currentQuestion: currentQuestion,
+            buzzerActive: false,
+            buzzer: null,
+            playerAnswer: null,
+            questionNumber: currentQuestionNumber
+        });
+        
+        // Reset UI
+        answerSection.style.display = 'none';
+        buzzedPlayer.textContent = '';
+        document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+        markCorrectBtn.style.display = 'none';
+        markIncorrectBtn.style.display = 'none';
+        showAnswerBtn.style.display = 'none';
+        
+        activateBuzzerBtn.disabled = false;
+        currentQuestionNumber++;
+        
+    } catch (error) {
+        console.error('Error fetching question:', error);
+        alert('Error loading question. Check console.');
+    }
+});
+
+// Activate buzzers
+activateBuzzerBtn.addEventListener('click', () => {
+    database.ref('gameState').update({
+        buzzerActive: true,
+        buzzer: null,
+        playerAnswer: null
+    });
+    activateBuzzerBtn.disabled = true;
+    answerSection.style.display = 'none';
+});
+
+// Mark correct
+markCorrectBtn.addEventListener('click', () => {
+    if (!currentBuzzedPlayer) return;
+    
+    database.ref(`gameState/scores/${currentBuzzedPlayer}`).transaction((score) => {
+        return (score || 0) + 4;
+    });
+    
+    resetForNextQuestion();
+});
+
+// Mark incorrect
+markIncorrectBtn.addEventListener('click', () => {
+    if (!currentBuzzedPlayer) return;
+    
+    database.ref(`gameState/scores/${currentBuzzedPlayer}`).transaction((score) => {
+        return (score || 0) - 4;
+    });
+    
+    // Reactivate buzzers for other players
+    database.ref('gameState').update({
+        buzzerActive: true,
+        buzzer: null,
+        playerAnswer: null
+    });
+    
+    answerSection.style.display = 'none';
+    markCorrectBtn.style.display = 'none';
+    markIncorrectBtn.style.display = 'none';
+    showAnswerBtn.style.display = 'none';
+});
+
+// Show answer
+showAnswerBtn.addEventListener('click', () => {
+    answerSection.style.display = 'block';
+});
+
+// Reset game
+resetGameBtn.addEventListener('click', () => {
+    if (confirm('Reset all scores and start over?')) {
+        currentQuestionNumber = 1;
+        database.ref('gameState').set({
+            buzzerActive: false,
+            currentQuestion: null,
+            scores: {
+                player1: 0,
+                player2: 0,
+                player3: 0,
+                player4: 0
+            },
+            questionNumber: 1
+        });
+        questionText.textContent = 'Click "New Question" to start';
+        answerSection.style.display = 'none';
+    }
+});
+
+function resetForNextQuestion() {
+    database.ref('gameState').update({
+        buzzerActive: false,
+        buzzer: null,
+        playerAnswer: null
+    });
+    
+    buzzedPlayer.textContent = '';
+    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+    markCorrectBtn.style.display = 'none';
+    markIncorrectBtn.style.display = 'none';
+    showAnswerBtn.style.display = 'none';
+    answerSection.style.display = 'none';
+    currentBuzzedPlayer = null;
+}
