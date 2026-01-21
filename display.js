@@ -86,7 +86,7 @@ newQuestionBtn.addEventListener('click', async () => {
     
     try {
         // Just fetch a random question without filtering
-        const response = await fetch(API_URL, {
+        const response = await fetch(CORS_PROXY + encodeURIComponent(API_URL), {
             method: 'GET'  // Changed to GET - simpler
         });
         
