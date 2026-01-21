@@ -4,14 +4,14 @@ const playerId = urlParams.get('id') || '1';
 const playerColors = ['#ff4444', '#4444ff', '#44ff44', '#ffff44'];
 const playerNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
 
+// Buzzer sound frequencies (different for each player)
+const buzzerFrequencies = [523.25, 659.25, 783.99, 880.00]; // C5, E5, G5, A5
+
 // DOM elements
 const playerName = document.getElementById('playerName');
 const playerScore = document.getElementById('playerScore');
 const statusMessage = document.getElementById('statusMessage');
 const buzzer = document.getElementById('buzzer');
-const answerContainer = document.getElementById('answerContainer');
-const answerInput = document.getElementById('answerInput');
-const submitAnswer = document.getElementById('submitAnswer');
 const questionDisplay = document.getElementById('questionDisplay');
 
 // Set player identity
@@ -23,6 +23,26 @@ document.body.style.setProperty('--player-color', playerColors[playerId - 1]);
 let canBuzz = false;
 let hasBuzzed = false;
 
+// Audio context for buzzer sounds
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBuzzerSound(playerNum) {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = buzzerFrequencies[playerNum - 1];
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+}
+
 // Listen to game state
 database.ref('gameState').on('value', (snapshot) => {
     const state = snapshot.val();
@@ -33,7 +53,7 @@ database.ref('gameState').on('value', (snapshot) => {
         playerScore.textContent = state.scores[`player${playerId}`];
     }
     
-    // Hide question text - players only hear it
+    // Show question status
     if (state.isReading) {
         questionDisplay.textContent = '🔊 Listen to the question...';
         questionDisplay.style.display = 'block';
@@ -51,7 +71,6 @@ database.ref('gameState').on('value', (snapshot) => {
         buzzer.disabled = false;
         buzzer.classList.remove('locked');
         statusMessage.textContent = 'Ready to buzz!';
-        answerContainer.style.display = 'none';
     } else {
         canBuzz = false;
         buzzer.disabled = true;
@@ -60,13 +79,21 @@ database.ref('gameState').on('value', (snapshot) => {
     
     // Check if this player buzzed in
     if (state.buzzer && state.buzzer.playerId === `player${playerId}`) {
-        statusMessage.textContent = 'You buzzed in! Answer now:';
-        answerContainer.style.display = 'block';
-        answerInput.focus();
+        statusMessage.textContent = '🎯 You buzzed in! Answer verbally to the moderator.';
+        buzzer.classList.add('locked');
     } else if (state.buzzer && state.buzzer.playerId) {
         const buzzedPlayerNum = state.buzzer.playerId.replace('player', '');
         statusMessage.textContent = `Player ${buzzedPlayerNum} buzzed in`;
         buzzer.classList.add('locked');
+    }
+});
+
+// Listen for buzzer events to play sounds
+database.ref('gameState/buzzer').on('value', (snapshot) => {
+    const buzzer = snapshot.val();
+    if (buzzer && buzzer.playerId) {
+        const playerNum = parseInt(buzzer.playerId.replace('player', ''));
+        playBuzzerSound(playerNum);
     }
 });
 
@@ -93,25 +120,4 @@ function buzzIn() {
     // Visual feedback
     buzzer.classList.add('buzzed');
     setTimeout(() => buzzer.classList.remove('buzzed'), 300);
-}
-
-// Submit answer
-submitAnswer.addEventListener('click', submitPlayerAnswer);
-answerInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') submitPlayerAnswer();
-});
-
-function submitPlayerAnswer() {
-    const answer = answerInput.value.trim();
-    if (!answer) return;
-    
-    database.ref('gameState/playerAnswer').set({
-        playerId: `player${playerId}`,
-        answer: answer,
-        timestamp: Date.now()
-    });
-    
-    answerInput.value = '';
-    answerContainer.style.display = 'none';
-    statusMessage.textContent = 'Answer submitted! Waiting for moderator...';
 }

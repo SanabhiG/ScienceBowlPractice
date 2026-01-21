@@ -373,3 +373,68 @@ margin-top: 15px;
 .instructions li {
 margin: 10px 0;
 }
+.timer-display {
+    font-size: 3em;
+    font-weight: bold;
+    color: #ffaa00;
+    text-align: center;
+    margin: 20px 0;
+    animation: pulse 1s infinite;
+}
+
+.settings-section {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.setting-group {
+    margin-bottom: 20px;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-group h3 {
+    margin-bottom: 15px;
+    color: #ffff44;
+}
+
+.source-select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.source-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+.round-input {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.round-input::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.category-filter {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}

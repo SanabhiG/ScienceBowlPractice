@@ -35,12 +35,15 @@
                 <div class="light player-4" id="light4"></div>
             </div>
             <div class="buzzed-player" id="buzzedPlayer"></div>
+            <div class="timer-display" id="timerDisplay" style="display: none;">
+                Time: 5s
+            </div>
         </div>
         
         <div class="question-section">
             <div class="question-header">
                 <span class="question-category" id="questionCategory">CATEGORY</span>
-                <span class="question-number">Question <span id="questionNum">1</span>/25</span>
+                <span class="question-number">Question <span id="questionNum">1</span></span>
             </div>
             <div class="question-text" id="questionText">
                 Click "New Question" to start
@@ -64,22 +67,54 @@
             <button id="resetGame" class="control-btn warning">Reset Game</button>
         </div>
         
-        <div class="category-filter">
-            <label>
-                <input type="checkbox" class="category-checkbox" value="PHYSICS" checked> Physics
-            </label>
-            <label>
-                <input type="checkbox" class="category-checkbox" value="CHEMISTRY" checked> Chemistry
-            </label>
-            <label>
-                <input type="checkbox" class="category-checkbox" value="BIOLOGY" checked> Biology
-            </label>
-            <label>
-                <input type="checkbox" class="category-checkbox" value="MATH" checked> Math
-            </label>
-            <label>
-                <input type="checkbox" class="category-checkbox" value="EARTH SCIENCE" checked> Earth Science
-            </label>
+        <div class="settings-section">
+            <div class="setting-group">
+                <h3>📚 Source Selection</h3>
+                <select id="sourceSelect" class="source-select">
+                    <option value="">All Sources (Random)</option>
+                    <option value="Official">Official Sample Sets</option>
+                    <option value="CSUB">CSUB Regionals</option>
+                    <option value="05Nats">2005 Nationals</option>
+                    <option value="98Nats">1998 Nationals</option>
+                </select>
+                <input type="number" id="roundNumber" placeholder="Round # (optional)" min="1" max="25" class="round-input">
+            </div>
+            
+            <div class="setting-group">
+                <h3>🔬 Category Filter</h3>
+                <div class="category-filter">
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="PHYSICS" checked> Physics
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="CHEMISTRY" checked> Chemistry
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="BIOLOGY" checked> Biology
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="MATH" checked> Math
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="EARTH SCIENCE" checked> Earth Science
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="EARTH AND SPACE" checked> Earth & Space
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="ASTRONOMY" checked> Astronomy
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="ENERGY" checked> Energy
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="GENERAL SCIENCE" checked> General Science
+                    </label>
+                    <label>
+                        <input type="checkbox" class="category-checkbox" value="COMPUTER SCIENCE" checked> Computer Science
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 
