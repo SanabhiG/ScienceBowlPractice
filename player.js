@@ -33,9 +33,15 @@ database.ref('gameState').on('value', (snapshot) => {
         playerScore.textContent = state.scores[`player${playerId}`];
     }
     
-    // Update question
-    if (state.currentQuestion) {
-        questionDisplay.textContent = state.currentQuestion.tossup_question;
+    // Hide question text - players only hear it
+    if (state.isReading) {
+        questionDisplay.textContent = '🔊 Listen to the question...';
+        questionDisplay.style.display = 'block';
+    } else if (state.currentQuestion) {
+        questionDisplay.textContent = 'Question loaded. Waiting for moderator to read...';
+        questionDisplay.style.display = 'block';
+    } else {
+        questionDisplay.style.display = 'none';
     }
     
     // Update buzzer state
@@ -58,7 +64,8 @@ database.ref('gameState').on('value', (snapshot) => {
         answerContainer.style.display = 'block';
         answerInput.focus();
     } else if (state.buzzer && state.buzzer.playerId) {
-        statusMessage.textContent = `${state.buzzer.playerId} buzzed in`;
+        const buzzedPlayerNum = state.buzzer.playerId.replace('player', '');
+        statusMessage.textContent = `Player ${buzzedPlayerNum} buzzed in`;
         buzzer.classList.add('locked');
     }
 });

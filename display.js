@@ -15,10 +15,13 @@ const markCorrectBtn = document.getElementById('markCorrect');
 const markIncorrectBtn = document.getElementById('markIncorrect');
 const showAnswerBtn = document.getElementById('showAnswer');
 const resetGameBtn = document.getElementById('resetGame');
+const readQuestionBtn = document.getElementById('readQuestion');
 
 let currentQuestion = null;
 let currentQuestionNumber = 1;
 let currentBuzzedPlayer = null;
+let speechSynthesis = window.speechSynthesis;
+let currentUtterance = null;
 
 // Initialize game state
 database.ref('gameState').set({
@@ -30,7 +33,8 @@ database.ref('gameState').set({
         player3: 0,
         player4: 0
     },
-    questionNumber: 1
+    questionNumber: 1,
+    isReading: false
 });
 
 // Listen for game state changes
@@ -54,6 +58,11 @@ database.ref('gameState').on('value', (snapshot) => {
         document.getElementById(`light${playerNum}`).classList.add('active');
         
         buzzedPlayer.textContent = `Player ${playerNum} buzzed in!`;
+        
+        // Stop reading when someone buzzes
+        if (currentUtterance) {
+            speechSynthesis.cancel();
+        }
         
         // Show grading buttons
         markCorrectBtn.style.display = 'inline-block';
@@ -80,6 +89,10 @@ newQuestionBtn.addEventListener('click', async () => {
             body: JSON.stringify({ categories })
         });
         
+        if (!response.ok) {
+            throw new Error('API request failed');
+        }
+        
         const data = await response.json();
         currentQuestion = data;
         
@@ -89,12 +102,13 @@ newQuestionBtn.addEventListener('click', async () => {
         questionNum.textContent = currentQuestionNumber;
         
         // Update Firebase
-        database.ref('gameState').update({
+        await database.ref('gameState').update({
             currentQuestion: currentQuestion,
             buzzerActive: false,
             buzzer: null,
             playerAnswer: null,
-            questionNumber: currentQuestionNumber
+            questionNumber: currentQuestionNumber,
+            isReading: false
         });
         
         // Reset UI
@@ -106,12 +120,49 @@ newQuestionBtn.addEventListener('click', async () => {
         showAnswerBtn.style.display = 'none';
         
         activateBuzzerBtn.disabled = false;
+        readQuestionBtn.disabled = false;
         currentQuestionNumber++;
+        
+        console.log('Question loaded successfully:', currentQuestion);
         
     } catch (error) {
         console.error('Error fetching question:', error);
-        alert('Error loading question. Check console.');
+        alert('Error loading question. Check console for details. The API might be down or CORS is blocking it.');
     }
+});
+
+// Read question aloud
+readQuestionBtn.addEventListener('click', () => {
+    if (!currentQuestion) {
+        alert('Load a question first!');
+        return;
+    }
+    
+    // Stop any current speech
+    speechSynthesis.cancel();
+    
+    // Create utterance
+    currentUtterance = new SpeechSynthesisUtterance(currentQuestion.tossup_question);
+    currentUtterance.rate = 0.9; // Slightly slower for clarity
+    currentUtterance.pitch = 1;
+    currentUtterance.volume = 1;
+    
+    // Update Firebase that we're reading
+    database.ref('gameState/isReading').set(true);
+    
+    currentUtterance.onend = () => {
+        database.ref('gameState/isReading').set(false);
+        console.log('Finished reading question');
+    };
+    
+    speechSynthesis.speak(currentUtterance);
+    readQuestionBtn.textContent = '🔊 Reading...';
+    readQuestionBtn.disabled = true;
+    
+    setTimeout(() => {
+        readQuestionBtn.textContent = '🔊 Read Question';
+        readQuestionBtn.disabled = false;
+    }, 2000);
 });
 
 // Activate buzzers
@@ -166,6 +217,7 @@ showAnswerBtn.addEventListener('click', () => {
 resetGameBtn.addEventListener('click', () => {
     if (confirm('Reset all scores and start over?')) {
         currentQuestionNumber = 1;
+        speechSynthesis.cancel();
         database.ref('gameState').set({
             buzzerActive: false,
             currentQuestion: null,
@@ -175,7 +227,8 @@ resetGameBtn.addEventListener('click', () => {
                 player3: 0,
                 player4: 0
             },
-            questionNumber: 1
+            questionNumber: 1,
+            isReading: false
         });
         questionText.textContent = 'Click "New Question" to start';
         answerSection.style.display = 'none';
@@ -183,10 +236,12 @@ resetGameBtn.addEventListener('click', () => {
 });
 
 function resetForNextQuestion() {
+    speechSynthesis.cancel();
     database.ref('gameState').update({
         buzzerActive: false,
         buzzer: null,
-        playerAnswer: null
+        playerAnswer: null,
+        isReading: false
     });
     
     buzzedPlayer.textContent = '';
