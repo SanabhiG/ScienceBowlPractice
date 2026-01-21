@@ -85,41 +85,21 @@ newQuestionBtn.addEventListener('click', async () => {
         .map(cb => cb.value);
     
     try {
-        // Build the request URL with CORS proxy
-        let requestUrl = CORS_PROXY + encodeURIComponent(API_URL);
-        
-        // For POST requests with categories, we need a different approach
-        let fetchOptions = {
-            method: 'GET',
-            headers: { 
-                'Content-Type': 'application/json'
-            }
-        };
-        
-        // If categories are selected, use POST through proxy
-        if (categories.length > 0) {
-            // Some CORS proxies don't handle POST well, so we'll use GET for now
-            // and filter on the client side if needed
-            console.log('Selected categories:', categories);
-        }
-        
-        const response = await fetch(requestUrl, fetchOptions);
+        // Just fetch a random question without filtering
+        const response = await fetch(API_URL, {
+            method: 'GET'  // Changed to GET - simpler
+        });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('API request failed');
         }
         
         const data = await response.json();
         
-        // If categories were selected, check if question matches
-        // If not, fetch another one (simple client-side filtering)
-        if (categories.length > 0 && !categories.includes(data.category)) {
-            console.log('Question category mismatch, fetching another...');
-            newQuestionBtn.click(); // Try again
-            return;
-        }
-        
+        // The API returns the question directly, not wrapped
         currentQuestion = data;
+        
+        console.log('Fetched question:', currentQuestion);
         
         questionText.textContent = currentQuestion.tossup_question;
         questionCategory.textContent = currentQuestion.category;
@@ -148,11 +128,11 @@ newQuestionBtn.addEventListener('click', async () => {
         readQuestionBtn.disabled = false;
         currentQuestionNumber++;
         
-        console.log('Question loaded successfully:', currentQuestion);
+        console.log('Question loaded successfully!');
         
     } catch (error) {
         console.error('Error fetching question:', error);
-        alert('Error loading question. The CORS proxy might be down. Try again in a moment.');
+        alert('Error loading question. The API might be down. Check console for details.');
     }
 });
 
