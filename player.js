@@ -17,11 +17,11 @@ const database = firebase.database();
 // Get player ID from URL
 const urlParams = new URLSearchParams(window.location.search);
 const playerId = urlParams.get('id') || '1';
-const playerColors = ['#ff4444', '#4444ff', '#44ff44', '#ffff44'];
-const playerNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+const playerColors = ['#ff4444', '#4444ff', '#44ff44', '#ffff44', '#9b59b6'];
+const playerNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4', 'Player 5'];
 
 // Buzzer sound frequencies (different for each player)
-const buzzerFrequencies = [523.25, 659.25, 783.99, 880.00]; // C5, E5, G5, A5
+const buzzerFrequencies = [523.25, 659.25, 783.99, 880.00, 987.77]; // C5, E5, G5, A5, B5
 
 // DOM elements
 const playerName = document.getElementById('playerName');

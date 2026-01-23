@@ -8,6 +8,283 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ===== INDEX PAGE (Home/Role Selection) ===== */
+body:not(.player-body):not(.display-body) {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 40px;
+    font-size: 2.5em;
+}
+
+h2 {
+    color: #555;
+    margin-bottom: 25px;
+    font-size: 1.8em;
+}
+
+.role-selection {
+    margin: 40px 0;
+}
+
+/* Moderator Button */
+.role-btn {
+    display: block;
+    padding: 30px;
+    margin: 20px 0;
+    background: #f8f9fa;
+    border: 3px solid #dee2e6;
+    border-radius: 15px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.role-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.role-btn h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.role-btn p {
+    font-size: 1.1em;
+    color: #666;
+}
+
+.moderator-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.moderator-btn p {
+    color: rgba(255,255,255,0.9);
+}
+
+.moderator-btn:hover {
+    background: linear-gradient(135deg, #7c8ef5 0%, #8a5bb5 100%);
+}
+
+/* Player Buttons Grid */
+.player-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.player-btn {
+    padding: 30px 20px;
+}
+
+.player-1 { 
+    border-color: #ff4444; 
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+}
+
+.player-2 { 
+    border-color: #4444ff; 
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%);
+    color: white;
+}
+
+.player-3 { 
+    border-color: #44ff44; 
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    color: white;
+}
+
+.player-4 { 
+    border-color: #ffff44; 
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    color: white;
+}
+
+.player-5 { 
+    border-color: #9b59b6; 
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+}
+
+.player-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Instructions (index page) */
+.container .instructions {
+    margin-top: 50px;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border-left: 5px solid #667eea;
+}
+
+.container .instructions h3 {
+    color: #667eea;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+.container .instructions ol {
+    margin-left: 25px;
+    line-height: 2;
+    font-size: 1.1em;
+    color: #555;
+}
+
+.container .instructions li {
+    margin: 15px 0;
+}
+
+/* ===== PLAYER PAGES ===== */
+.player-body {
+    background: var(--player-color, #667eea);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.player-container {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.player-header {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.player-header h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: var(--player-color);
+}
+
+.score-display {
+    font-size: 3em;
+    font-weight: bold;
+    color: var(--player-color);
+    margin-top: 15px;
+}
+
+.status-message {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 1.3em;
+    margin-bottom: 40px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    color: #666;
+}
+
+.buzzer-container {
+    margin: 60px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.buzzer-btn {
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    border: 12px solid white;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    color: white;
+    font-size: 3.5em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.buzzer-btn:hover:not(:disabled):not(.locked) {
+    transform: scale(1.05);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+.buzzer-btn:active:not(:disabled):not(.locked) {
+    transform: scale(0.95);
+}
+
+.buzzer-btn.buzzed {
+    animation: buzz 0.3s;
+}
+
+@keyframes buzz {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.15) rotate(5deg); }
+    75% { transform: scale(1.15) rotate(-5deg); }
+}
+
+.buzzer-btn.locked {
+    background: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.buzzer-text {
+    display: block;
+}
+
+.buzzer-hint {
+    display: block;
+    font-size: 0.35em;
+    margin-top: 15px;
+    opacity: 0.9;
+    font-weight: normal;
+}
+
+.question-display {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin-top: 30px;
+    font-size: 1.2em;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    color: #333;
+}
+
+.player-container .instructions {
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 40px;
+}
+
+.player-container .instructions p {
+    color: #333;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+/* ===== MODERATOR DISPLAY ===== */
 .display-body {
     background: #1a1a2e;
     color: white;
@@ -42,6 +319,11 @@ body {
 .player-score.player-3 { border-color: #44ff44; }
 .player-score.player-4 { border-color: #ffff44; }
 
+.player-score:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.15);
+}
+
 .player-score h3 {
     font-size: 1.5em;
     margin-bottom: 15px;
@@ -65,6 +347,7 @@ body {
 .buzzer-indicator h2 {
     margin-bottom: 30px;
     color: #ffff44;
+    font-size: 2em;
 }
 
 .buzzer-lights {
@@ -99,8 +382,8 @@ body {
 .light.player-4.active { background: #ffff44; }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.8; }
 }
 
 .buzzed-player {
@@ -129,6 +412,7 @@ body {
     gap: 20px;
     justify-content: center;
     margin-bottom: 30px;
+    flex-wrap: wrap;
 }
 
 .control-btn {
@@ -146,6 +430,10 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
+.control-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
 .control-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -154,6 +442,7 @@ body {
 .primary { background: #2196F3; color: white; }
 .success { background: #4CAF50; color: white; }
 .danger { background: #f44336; color: white; }
+.warning { background: #ff9800; color: white; }
 
 /* Scoring Controls */
 .scoring-controls {
@@ -162,6 +451,7 @@ body {
     border-radius: 15px;
     text-align: center;
     margin-bottom: 30px;
+    border: 3px solid #4CAF50;
 }
 
 .scoring-controls h3 {
@@ -211,4 +501,80 @@ body {
 .admin-controls {
     text-align: center;
     margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid rgba(255,255,255,0.2);
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .player-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .scoreboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .buzzer-btn {
+        width: 250px;
+        height: 250px;
+        font-size: 2.5em;
+    }
+
+    .controls {
+        flex-direction: column;
+    }
+
+    .control-btn {
+        width: 100%;
+    }
+
+    .point-buttons {
+        flex-direction: column;
+    }
+
+    .point-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .scoreboard {
+        grid-template-columns: 1fr;
+    }
+
+    .buzzer-lights {
+        gap: 20px;
+    }
+
+    .light {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+.player-5 { 
+    border-color: #9b59b6; 
+    background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    color: white;
+}
+
+/* ... later in the file, after line 310, add: */
+
+.player-score.player-5 { border-color: #9b59b6; }
+
+/* ... and after line 358, add: */
+
+.light.player-5 { border-color: #9b59b6; }
+
+/* ... and after line 368, add: */
+
+.light.player-5.active { background: #9b59b6; }

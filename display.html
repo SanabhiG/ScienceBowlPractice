@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Science Bowl - Moderator</title>
+    <title>Science Bowl - Moderator Display</title>
     <link rel="stylesheet" href="styles-simple.css">
 </head>
 <body class="display-body">
@@ -26,6 +26,10 @@
                 <h3>🟡 Player 4</h3>
                 <div class="score" id="score4">0</div>
             </div>
+            <div class="player-score player-5">
+                <h3>🟣 Player 5</h3>
+                <div class="score" id="score5">0</div>
+            </div>
         </div>
         
         <!-- Buzzer Indicator -->
@@ -36,6 +40,7 @@
                 <div class="light player-2" id="light2"></div>
                 <div class="light player-3" id="light3"></div>
                 <div class="light player-4" id="light4"></div>
+                <div class="light player-5" id="light5"></div>
             </div>
             <div class="buzzed-player" id="buzzedPlayer">Waiting for buzz...</div>
         </div>
@@ -55,11 +60,9 @@
         <div class="scoring-controls" id="scoringControls" style="display: none;">
             <h3>Award Points:</h3>
             <div class="point-buttons">
-                <button class="point-btn" data-points="-4">-4</button>
-                <button class="point-btn" data-points="-2">-2</button>
-                <button class="point-btn" data-points="+2">+2</button>
-                <button class="point-btn" data-points="+4">+4</button>
-                <button class="point-btn" data-points="+10">+10</button>
+                <button class="point-btn" data-points="-4">-4 (Wrong)</button>
+                <button class="point-btn" data-points="+4">+4 (Tossup)</button>
+                <button class="point-btn" data-points="+10">+10 (Bonus)</button>
             </div>
         </div>
         

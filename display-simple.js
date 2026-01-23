@@ -32,7 +32,8 @@ database.ref('gameState').set({
         player1: 0,
         player2: 0,
         player3: 0,
-        player4: 0
+        player4: 0,
+        player5: 0
     },
     questionNumber: 1
 });
@@ -47,6 +48,7 @@ database.ref('gameState').on('value', (snapshot) => {
     document.getElementById('score2').textContent = state.scores.player2 || 0;
     document.getElementById('score3').textContent = state.scores.player3 || 0;
     document.getElementById('score4').textContent = state.scores.player4 || 0;
+    document.getElementById('score5').textContent = state.scores.player5 || 0;
     
     // Update buzzer lights
     if (state.buzzer && state.buzzer.playerId) {
@@ -132,7 +134,8 @@ resetGameBtn.addEventListener('click', () => {
                 player1: 0,
                 player2: 0,
                 player3: 0,
-                player4: 0
+                player4: 0,
+                player5: 0
             },
             questionNumber: 1
         });
