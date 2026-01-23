@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Science Bowl - Moderator Display</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Science Bowl - Moderator</title>
+    <link rel="stylesheet" href="styles-simple.css">
 </head>
 <body class="display-body">
     <div class="display-container">
+        <!-- Scoreboard -->
         <div class="scoreboard">
             <div class="player-score player-1">
                 <h3>🔴 Player 1</h3>
@@ -27,100 +28,49 @@
             </div>
         </div>
         
-        <div class="buzzer-indicator" id="buzzerIndicator">
+        <!-- Buzzer Indicator -->
+        <div class="buzzer-indicator">
+            <h2>Buzzer Status</h2>
             <div class="buzzer-lights">
                 <div class="light player-1" id="light1"></div>
                 <div class="light player-2" id="light2"></div>
                 <div class="light player-3" id="light3"></div>
                 <div class="light player-4" id="light4"></div>
             </div>
-            <div class="buzzed-player" id="buzzedPlayer"></div>
-            <div class="timer-display" id="timerDisplay" style="display: none;">
-                Time: 5s
-            </div>
+            <div class="buzzed-player" id="buzzedPlayer">Waiting for buzz...</div>
         </div>
         
-        <div class="question-section">
-            <div class="question-header">
-                <span class="question-category" id="questionCategory">CATEGORY</span>
-                <span class="question-number">Question <span id="questionNum">1</span></span>
-            </div>
-            <div class="question-text" id="questionText">
-                Click "New Question" to start
-            </div>
+        <!-- Question Counter -->
+        <div class="question-counter">
+            <h2>Question <span id="questionNum">1</span></h2>
         </div>
         
-        <div class="answer-section" id="answerSection" style="display: none;">
-            <h3>Player Answer:</h3>
-            <div class="player-answer" id="playerAnswer"></div>
-            <h3>Correct Answer:</h3>
-            <div class="correct-answer" id="correctAnswer"></div>
-        </div>
-        
+        <!-- Controls -->
         <div class="controls">
-            <button id="newQuestion" class="control-btn primary">New Question</button>
-            <button id="readQuestion" class="control-btn primary" disabled>🔊 Read Question</button>
-            <button id="activateBuzzer" class="control-btn" disabled>Activate Buzzers</button>
-            <button id="markCorrect" class="control-btn success" style="display: none;">✓ Correct (+4)</button>
-            <button id="markIncorrect" class="control-btn danger" style="display: none;">✗ Incorrect (-4)</button>
-            <button id="showAnswer" class="control-btn" style="display: none;">Show Answer</button>
-            <button id="resetGame" class="control-btn warning">Reset Game</button>
+            <button id="activateBuzzer" class="control-btn primary">🔔 Activate Buzzers</button>
+            <button id="nextQuestion" class="control-btn success">➡️ Next Question</button>
         </div>
         
-        <div class="settings-section">
-            <div class="setting-group">
-                <h3>📚 Source Selection</h3>
-                <select id="sourceSelect" class="source-select">
-                    <option value="">All Sources (Random)</option>
-                    <option value="Official">Official Sample Sets</option>
-                    <option value="CSUB">CSUB Regionals</option>
-                    <option value="05Nats">2005 Nationals</option>
-                    <option value="98Nats">1998 Nationals</option>
-                </select>
-                <input type="number" id="roundNumber" placeholder="Round # (optional)" min="1" max="25" class="round-input">
+        <!-- Scoring Controls (appear when someone buzzes) -->
+        <div class="scoring-controls" id="scoringControls" style="display: none;">
+            <h3>Award Points:</h3>
+            <div class="point-buttons">
+                <button class="point-btn" data-points="-4">-4</button>
+                <button class="point-btn" data-points="-2">-2</button>
+                <button class="point-btn" data-points="+2">+2</button>
+                <button class="point-btn" data-points="+4">+4</button>
+                <button class="point-btn" data-points="+10">+10</button>
             </div>
-            
-            <div class="setting-group">
-                <h3>🔬 Category Filter</h3>
-                <div class="category-filter">
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="PHYSICS" checked> Physics
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="CHEMISTRY" checked> Chemistry
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="BIOLOGY" checked> Biology
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="MATH" checked> Math
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="EARTH SCIENCE" checked> Earth Science
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="EARTH AND SPACE" checked> Earth & Space
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="ASTRONOMY" checked> Astronomy
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="ENERGY" checked> Energy
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="GENERAL SCIENCE" checked> General Science
-                    </label>
-                    <label>
-                        <input type="checkbox" class="category-checkbox" value="COMPUTER SCIENCE" checked> Computer Science
-                    </label>
-                </div>
-            </div>
+        </div>
+        
+        <!-- Reset -->
+        <div class="admin-controls">
+            <button id="resetGame" class="control-btn danger">🔄 Reset Game</button>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="config.js"></script>
-    <script src="display.js"></script>
+    <script src="display-simple.js"></script>
 </body>
 </html>

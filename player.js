@@ -1,3 +1,19 @@
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDNk5EGWDPBr8MkUFNdfvhP1NvnDxWERq8",
+  authDomain: "science-bowl-practice-8800a.firebaseapp.com",
+  databaseURL: "https://science-bowl-practice-8800a-default-rtdb.firebaseio.com",
+  projectId: "science-bowl-practice-8800a",
+  storageBucket: "science-bowl-practice-8800a.firebasestorage.app",
+  messagingSenderId: "240054855565",
+  appId: "1:240054855565:web:2897ab544b9f1c1b3d3fc4",
+  measurementId: "G-4TD0W788X5"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 // Get player ID from URL
 const urlParams = new URLSearchParams(window.location.search);
 const playerId = urlParams.get('id') || '1';
@@ -24,23 +40,33 @@ let canBuzz = false;
 let hasBuzzed = false;
 
 // Audio context for buzzer sounds
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext = null;
+
+// Initialize audio context on first user interaction
+function initAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
 
 function playBuzzerSound(playerNum) {
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const ctx = initAudioContext();
+    
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
     
     oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(ctx.destination);
     
     oscillator.frequency.value = buzzerFrequencies[playerNum - 1];
     oscillator.type = 'sine';
     
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
     
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
 }
 
 // Listen to game state
@@ -71,29 +97,45 @@ database.ref('gameState').on('value', (snapshot) => {
         buzzer.disabled = false;
         buzzer.classList.remove('locked');
         statusMessage.textContent = 'Ready to buzz!';
+        statusMessage.style.color = '#4CAF50';
     } else {
         canBuzz = false;
         buzzer.disabled = true;
         buzzer.classList.add('locked');
+        if (!state.buzzer) {
+            statusMessage.textContent = 'Waiting for question...';
+            statusMessage.style.color = '#999';
+        }
     }
     
     // Check if this player buzzed in
     if (state.buzzer && state.buzzer.playerId === `player${playerId}`) {
         statusMessage.textContent = '🎯 You buzzed in! Answer verbally to the moderator.';
+        statusMessage.style.color = '#2196F3';
         buzzer.classList.add('locked');
+        
+        // Vibrate if available
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]);
+        }
     } else if (state.buzzer && state.buzzer.playerId) {
         const buzzedPlayerNum = state.buzzer.playerId.replace('player', '');
         statusMessage.textContent = `Player ${buzzedPlayerNum} buzzed in`;
+        statusMessage.style.color = '#ff9800';
         buzzer.classList.add('locked');
     }
 });
 
 // Listen for buzzer events to play sounds
 database.ref('gameState/buzzer').on('value', (snapshot) => {
-    const buzzer = snapshot.val();
-    if (buzzer && buzzer.playerId) {
-        const playerNum = parseInt(buzzer.playerId.replace('player', ''));
-        playBuzzerSound(playerNum);
+    const buzzerData = snapshot.val();
+    if (buzzerData && buzzerData.playerId) {
+        const playerNum = parseInt(buzzerData.playerId.replace('player', ''));
+        try {
+            playBuzzerSound(playerNum);
+        } catch (e) {
+            console.log('Audio context not ready:', e);
+        }
     }
 });
 
@@ -111,13 +153,31 @@ document.addEventListener('keydown', (e) => {
 function buzzIn() {
     if (!canBuzz || hasBuzzed) return;
     
+    // Initialize audio context on first interaction
+    initAudioContext();
+    
     hasBuzzed = true;
+    canBuzz = false;
+    
     database.ref('gameState/buzzer').set({
         playerId: `player${playerId}`,
         timestamp: Date.now()
     });
     
+    database.ref('gameState/buzzerActive').set(false);
+    
     // Visual feedback
     buzzer.classList.add('buzzed');
     setTimeout(() => buzzer.classList.remove('buzzed'), 300);
+    
+    console.log(`Player ${playerId} buzzed in!`);
 }
+
+// Log when connected
+database.ref('.info/connected').on('value', (snapshot) => {
+    if (snapshot.val() === true) {
+        console.log('Connected to Firebase');
+    } else {
+        console.log('Disconnected from Firebase');
+    }
+});

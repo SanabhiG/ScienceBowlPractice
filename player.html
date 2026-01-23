@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Science Bowl - Player</title>
+    <title>Science Bowl - Player Buzzer</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="player-body">
@@ -20,7 +20,7 @@
         </div>
         
         <div class="buzzer-container">
-            <button id="buzzer" class="buzzer-btn">
+            <button id="buzzer" class="buzzer-btn locked">
                 <span class="buzzer-text">BUZZ</span>
                 <span class="buzzer-hint">Press SPACE</span>
             </button>
@@ -29,11 +29,17 @@
         <div class="question-display" id="questionDisplay" style="display: none;">
             🔊 Listen carefully...
         </div>
+        
+        <div class="instructions">
+            <p>Wait for the moderator to activate buzzers, then click or press SPACE to buzz in!</p>
+        </div>
     </div>
 
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="config.js"></script>
+    
+    <!-- Player script -->
     <script src="player.js"></script>
 </body>
 </html>
