@@ -4,7 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Science Bowl - Player Buzzer</title>
-    <link rel="stylesheet" href="styles-simple.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .player-body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--player-color, #667eea) 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .player-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        .player-header {
+            margin-bottom: 30px;
+        }
+        
+        #playerName {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            font-size: 1.5rem;
+            color: #666;
+        }
+        
+        #playerScore {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-message {
+            font-size: 1.3rem;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f5f5f5;
+            margin-bottom: 30px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .buzzer-container {
+            margin: 30px 0;
+        }
+        
+        .buzzer-btn {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 8px solid var(--player-color, #667eea);
+            background: linear-gradient(145deg, var(--player-color, #667eea), #764ba2);
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .buzzer-btn:hover:not(:disabled):not(.locked) {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        
+        .buzzer-btn:active:not(:disabled):not(.locked) {
+            transform: scale(0.95);
+        }
+        
+        .buzzer-btn.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #999;
+            border-color: #777;
+        }
+        
+        .buzzer-btn.buzzed {
+            animation: buzzAnimation 0.3s ease;
+        }
+        
+        @keyframes buzzAnimation {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .buzzer-text {
+            font-size: 3rem;
+        }
+        
+        .buzzer-hint {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .question-display {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .player-container {
+                padding: 20px;
+            }
+            
+            #playerName {
+                font-size: 2rem;
+            }
+            
+            .buzzer-btn {
+                width: 200px;
+                height: 200px;
+                font-size: 1.5rem;
+            }
+            
+            .buzzer-text {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
 </head>
 <body class="player-body">
     <div class="player-container">
@@ -18,6 +182,8 @@
         <div class="status-message" id="statusMessage">
             Waiting for question...
         </div>
+        
+        <div class="timer-display" id="timerDisplay">0s</div>
         
         <div class="buzzer-container">
             <button id="buzzer" class="buzzer-btn locked">
@@ -34,7 +200,7 @@
             <p>Wait for the moderator to activate buzzers, then click or press SPACE to buzz in!</p>
         </div>
     </div>
-
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>

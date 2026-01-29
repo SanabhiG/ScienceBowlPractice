@@ -29,6 +29,7 @@ const playerScore = document.getElementById('playerScore');
 const statusMessage = document.getElementById('statusMessage');
 const buzzer = document.getElementById('buzzer');
 const questionDisplay = document.getElementById('questionDisplay');
+const timerDisplay = document.getElementById('timerDisplay');
 
 // Set player identity
 playerName.textContent = playerNames[playerId - 1];
@@ -69,6 +70,30 @@ function playBuzzerSound(playerNum) {
     oscillator.stop(ctx.currentTime + 0.3);
 }
 
+// Update timer display
+function updateTimerDisplay(timeRemaining, isActive) {
+    if (timerDisplay) {
+        if (isActive && timeRemaining > 0) {
+            timerDisplay.style.display = 'block';
+            timerDisplay.textContent = `⏱️ ${timeRemaining}s`;
+            
+            // Color coding based on time remaining
+            if (timeRemaining <= 3) {
+                timerDisplay.style.color = '#f44336';
+                timerDisplay.style.fontSize = '3rem';
+            } else if (timeRemaining <= 5) {
+                timerDisplay.style.color = '#ff9800';
+                timerDisplay.style.fontSize = '2.5rem';
+            } else {
+                timerDisplay.style.color = '#4CAF50';
+                timerDisplay.style.fontSize = '2rem';
+            }
+        } else {
+            timerDisplay.style.display = 'none';
+        }
+    }
+}
+
 // Listen to game state
 database.ref('gameState').on('value', (snapshot) => {
     const state = snapshot.val();
@@ -78,6 +103,9 @@ database.ref('gameState').on('value', (snapshot) => {
     if (state.scores && state.scores[`player${playerId}`] !== undefined) {
         playerScore.textContent = state.scores[`player${playerId}`];
     }
+    
+    // Update timer display
+    updateTimerDisplay(state.timeRemaining || 0, state.timerActive || false);
     
     // Show question status
     if (state.isReading) {
@@ -103,8 +131,14 @@ database.ref('gameState').on('value', (snapshot) => {
         buzzer.disabled = true;
         buzzer.classList.add('locked');
         if (!state.buzzer) {
-            statusMessage.textContent = 'Waiting for question...';
-            statusMessage.style.color = '#999';
+            // Check if timer expired
+            if (state.timerActive === false && state.timeRemaining === 0 && hasBuzzed) {
+                statusMessage.textContent = '⏰ Time expired!';
+                statusMessage.style.color = '#ff9800';
+            } else {
+                statusMessage.textContent = 'Waiting for question...';
+                statusMessage.style.color = '#999';
+            }
         }
     }
     
