@@ -61,6 +61,7 @@ function startTimer(duration) {
     }
     
     timeRemaining = duration;
+    console.log(`Starting timer: ${duration} seconds`);
     updateTimerDisplay();
     
     // Update Firebase
@@ -72,6 +73,7 @@ function startTimer(duration) {
     // Start countdown
     timerInterval = setInterval(() => {
         timeRemaining--;
+        console.log(`Timer: ${timeRemaining} seconds remaining`);
         updateTimerDisplay();
         
         // Update Firebase
@@ -83,9 +85,19 @@ function startTimer(duration) {
             if (currentQuestionType === 'tossup') {
                 // Lock buzzers when answer timer expires
                 database.ref('gameState/buzzerActive').set(false);
-                buzzedPlayer.textContent = '⏰ Time expired! No points awarded. Click "Next Question" to continue.';
-                buzzedPlayer.style.color = '#ff9800';
-                scoringControls.style.display = 'none';
+                
+                // Check if someone buzzed in or if this is just the buzz-in timer
+                if (currentBuzzedPlayer) {
+                    // Someone buzzed but didn't answer in time
+                    buzzedPlayer.textContent = '⏰ Time expired! No points awarded. Click "Next Question" to continue.';
+                    buzzedPlayer.style.color = '#ff9800';
+                    scoringControls.style.display = 'none';
+                } else {
+                    // No one buzzed after question finished
+                    buzzedPlayer.textContent = '⏰ No one buzzed in time! Click "Next Question" to continue.';
+                    buzzedPlayer.style.color = '#ff9800';
+                    scoringControls.style.display = 'none';
+                }
             } else if (currentQuestionType === 'bonus') {
                 // Bonus time expired
                 buzzedPlayer.textContent = '⏰ Bonus time expired! Score accordingly (0 points if wrong/no answer).';
@@ -109,20 +121,28 @@ function stopTimer() {
 
 function updateTimerDisplay() {
     if (timerDisplay) {
-        timerDisplay.style.display = 'block';
-        timerDisplay.textContent = timeRemaining;
-        
-        // Color coding based on time remaining
-        if (timeRemaining <= 2) {
-            timerDisplay.style.color = '#f44336';
-            timerDisplay.style.fontSize = '4rem';
-        } else if (timeRemaining <= 3) {
-            timerDisplay.style.color = '#ff9800';
-            timerDisplay.style.fontSize = '3rem';
+        if (timeRemaining > 0) {
+            console.log(`Displaying timer: ${timeRemaining} seconds`);
+            timerDisplay.style.display = 'block';
+            timerDisplay.textContent = timeRemaining;
+            
+            // Color coding based on time remaining
+            if (timeRemaining <= 2) {
+                timerDisplay.style.color = '#f44336';
+                timerDisplay.style.fontSize = '4rem';
+            } else if (timeRemaining <= 3) {
+                timerDisplay.style.color = '#ff9800';
+                timerDisplay.style.fontSize = '3rem';
+            } else {
+                timerDisplay.style.color = '#4CAF50';
+                timerDisplay.style.fontSize = '2.5rem';
+            }
         } else {
-            timerDisplay.style.color = '#4CAF50';
-            timerDisplay.style.fontSize = '2.5rem';
+            console.log('Hiding timer');
+            timerDisplay.style.display = 'none';
         }
+    } else {
+        console.error('timerDisplay element not found!');
     }
 }
 
@@ -276,8 +296,12 @@ if (finishReadingBtn) {
         finishReadingBtn.disabled = true;
         finishReadingBtn.style.display = 'none';
         
-        buzzedPlayer.textContent = '✅ Question complete - Players can now buzz in (no interrupt penalty)';
+        buzzedPlayer.textContent = '✅ Question complete - Players have 5 seconds to buzz in!';
         buzzedPlayer.style.color = '#4CAF50';
+        
+        // Start 5-second timer for players to buzz in
+        startTimer(5);
+        console.log('Question finished - starting 5 second buzz-in timer');
     });
 }
 
