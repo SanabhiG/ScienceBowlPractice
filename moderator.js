@@ -238,7 +238,7 @@ database.ref('gameState/buzzer').on('value', (snapshot) => {
     if (buzzerData && buzzerData.playerId && currentQuestionType === 'tossup') {
         // Someone buzzed in during tossup - automatically start 5 second timer
         stopTimer(); // Stop any existing timer
-        startTimer(5);
+        
         
         const playerNum = buzzerData.playerId.replace('player', '');
         console.log(`Player ${playerNum} buzzed - starting 5 second answer timer`);
