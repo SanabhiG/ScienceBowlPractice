@@ -17,11 +17,11 @@ const database = firebase.database();
 const questionNum = document.getElementById('questionNum');
 const buzzedPlayer = document.getElementById('buzzedPlayer');
 const activateBuzzerBtn = document.getElementById('activateBuzzer');
+const finishReadingBtn = document.getElementById('finishReading');
 const nextQuestionBtn = document.getElementById('nextQuestion');
 const resetGameBtn = document.getElementById('resetGame');
 const scoringControls = document.getElementById('scoringControls');
 const timerDisplay = document.getElementById('timerDisplay');
-const startTossupTimerBtn = document.getElementById('startTossupTimer');
 const startBonusTimerBtn = document.getElementById('startBonusTimer');
 
 let currentQuestionNumber = 1;
@@ -29,7 +29,9 @@ let currentBuzzedPlayer = null;
 let timerInterval = null;
 let timeRemaining = 0;
 let currentQuestionType = 'tossup'; // 'tossup' or 'bonus'
-let bonusEligiblePlayer = null; // Player who gets to answer the bonus
+let bonusEligiblePlayer = null;
+let isReading = false; // Track if moderator is still reading
+let questionFinished = false; // Track if question reading is complete
 
 // Initialize game state
 database.ref('gameState').set({
@@ -46,7 +48,9 @@ database.ref('gameState').set({
     timerActive: false,
     timeRemaining: 0,
     questionType: 'tossup',
-    bonusEligiblePlayer: null
+    bonusEligiblePlayer: null,
+    isReading: false,
+    questionFinished: false
 });
 
 // Timer functions
@@ -62,20 +66,8 @@ function startTimer(duration) {
     // Update Firebase
     database.ref('gameState').update({
         timerActive: true,
-        timeRemaining: timeRemaining,
-        questionType: currentQuestionType
+        timeRemaining: timeRemaining
     });
-    
-    // For tossup: activate buzzers when timer starts
-    if (currentQuestionType === 'tossup') {
-        database.ref('gameState').update({
-            buzzerActive: true,
-            buzzer: null
-        });
-        activateBuzzerBtn.disabled = true;
-        activateBuzzerBtn.textContent = '⏳ Buzzers Active...';
-        buzzedPlayer.textContent = 'Buzzers active! Players can buzz in now...';
-    }
     
     // Start countdown
     timerInterval = setInterval(() => {
@@ -89,15 +81,14 @@ function startTimer(duration) {
             stopTimer();
             
             if (currentQuestionType === 'tossup') {
-                // Lock buzzers when tossup timer expires
+                // Lock buzzers when answer timer expires
                 database.ref('gameState/buzzerActive').set(false);
-                buzzedPlayer.textContent = '⏰ Time expired! No one buzzed in. Moving to next question.';
+                buzzedPlayer.textContent = '⏰ Time expired! No points awarded. Click "Next Question" to continue.';
                 buzzedPlayer.style.color = '#ff9800';
-                activateBuzzerBtn.disabled = false;
-                activateBuzzerBtn.textContent = '🔔 Activate Buzzers';
+                scoringControls.style.display = 'none';
             } else if (currentQuestionType === 'bonus') {
                 // Bonus time expired
-                buzzedPlayer.textContent = '⏰ Bonus time expired! Score accordingly.';
+                buzzedPlayer.textContent = '⏰ Bonus time expired! Score accordingly (0 points if wrong/no answer).';
                 buzzedPlayer.style.color = '#ff9800';
             }
         }
@@ -122,12 +113,15 @@ function updateTimerDisplay() {
         timerDisplay.textContent = timeRemaining;
         
         // Color coding based on time remaining
-        if (timeRemaining <= 3) {
+        if (timeRemaining <= 2) {
             timerDisplay.style.color = '#f44336';
-        } else if (timeRemaining <= 5) {
+            timerDisplay.style.fontSize = '4rem';
+        } else if (timeRemaining <= 3) {
             timerDisplay.style.color = '#ff9800';
+            timerDisplay.style.fontSize = '3rem';
         } else {
             timerDisplay.style.color = '#4CAF50';
+            timerDisplay.style.fontSize = '2.5rem';
         }
     }
 }
@@ -137,12 +131,24 @@ function updateScoringControls() {
     const pointButtons = document.querySelector('.point-buttons');
     
     if (currentQuestionType === 'tossup') {
-        if (scoringTitle) scoringTitle.textContent = 'Tossup Scoring:';
-        if (pointButtons) {
-            pointButtons.innerHTML = `
-                <button class="point-btn" data-points="-4">-4 (Interrupt/Wrong)</button>
-                <button class="point-btn" data-points="4" data-action="correct">+4 (Correct - Proceed to Bonus)</button>
-            `;
+        if (isReading && !questionFinished) {
+            // Interrupt situation
+            if (scoringTitle) scoringTitle.textContent = 'Interrupt Scoring:';
+            if (pointButtons) {
+                pointButtons.innerHTML = `
+                    <button class="point-btn" data-points="-4" data-action="wrong-interrupt">-4 (Wrong - Continue Reading)</button>
+                    <button class="point-btn" data-points="4" data-action="correct-interrupt">+4 (Correct - Proceed to Bonus)</button>
+                `;
+            }
+        } else if (questionFinished) {
+            // After question finished
+            if (scoringTitle) scoringTitle.textContent = 'Tossup Scoring (After Question):';
+            if (pointButtons) {
+                pointButtons.innerHTML = `
+                    <button class="point-btn" data-points="0" data-action="wrong-post">0 (Wrong - No Penalty)</button>
+                    <button class="point-btn" data-points="4" data-action="correct-post">+4 (Correct - Proceed to Bonus)</button>
+                `;
+            }
         }
     } else if (currentQuestionType === 'bonus') {
         if (scoringTitle) {
@@ -178,60 +184,100 @@ database.ref('gameState').on('value', (snapshot) => {
         const playerNum = state.buzzer.playerId.replace('player', '');
         currentBuzzedPlayer = state.buzzer.playerId;
         
-        // Stop the timer when someone buzzes
-        stopTimer();
-        if (timerDisplay) {
-            timerDisplay.style.display = 'none';
-        }
-        
         // Update lights
         document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
         document.getElementById(`light${playerNum}`).classList.add('active');
         
         // Show who buzzed
-        buzzedPlayer.textContent = `🎯 Player ${playerNum} buzzed in!`;
-        buzzedPlayer.style.color = '#4CAF50';
+        if (isReading && !questionFinished) {
+            buzzedPlayer.textContent = `⚠️ Player ${playerNum} interrupted! 5 seconds to answer...`;
+            buzzedPlayer.style.color = '#ff9800';
+        } else {
+            buzzedPlayer.textContent = `🎯 Player ${playerNum} buzzed in! 5 seconds to answer...`;
+            buzzedPlayer.style.color = '#4CAF50';
+        }
         
         // Show scoring controls
         scoringControls.style.display = 'block';
         activateBuzzerBtn.disabled = true;
+        if (finishReadingBtn) finishReadingBtn.disabled = true;
     } else if (state.questionType === 'bonus' && state.bonusEligiblePlayer) {
         // Bonus question in progress
         const playerNum = state.bonusEligiblePlayer.replace('player', '');
         document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
         document.getElementById(`light${playerNum}`).classList.add('active');
     } else {
-        buzzedPlayer.textContent = 'Ready for next question...';
-        buzzedPlayer.style.color = '#999';
-        scoringControls.style.display = 'none';
+        document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
     }
 });
 
-// Note: Buzzer activation is now handled by the tossup timer
-// This button is kept for UI consistency but is disabled during tossup
-activateBuzzerBtn.addEventListener('click', () => {
-    // This is now handled by starting the tossup timer
-    buzzedPlayer.textContent = 'Use "Start Tossup Timer" to begin the question.';
-    buzzedPlayer.style.color = '#ff9800';
-});
-
-// Start tossup timer (5 seconds)
-if (startTossupTimerBtn) {
-    startTossupTimerBtn.addEventListener('click', () => {
-        currentQuestionType = 'tossup';
-        bonusEligiblePlayer = null;
-        updateScoringControls();
-        
-        // Stop any existing timer
-        stopTimer();
-        
-        // Start the tossup timer (this will also activate buzzers)
+// Listen for buzzer events to auto-start the 5-second timer
+database.ref('gameState/buzzer').on('value', (snapshot) => {
+    const buzzerData = snapshot.val();
+    
+    if (buzzerData && buzzerData.playerId && currentQuestionType === 'tossup') {
+        // Someone buzzed in during tossup - automatically start 5 second timer
+        stopTimer(); // Stop any existing timer
         startTimer(5);
         
-        startTossupTimerBtn.disabled = true;
-        startBonusTimerBtn.disabled = true;
+        const playerNum = buzzerData.playerId.replace('player', '');
+        console.log(`Player ${playerNum} buzzed - starting 5 second answer timer`);
+    }
+});
+
+// Activate Buzzers button (start reading tossup question)
+activateBuzzerBtn.addEventListener('click', () => {
+    currentQuestionType = 'tossup';
+    bonusEligiblePlayer = null;
+    isReading = true;
+    questionFinished = false;
+    updateScoringControls();
+    
+    database.ref('gameState').update({
+        buzzerActive: true,
+        buzzer: null,
+        questionType: 'tossup',
+        isReading: true,
+        questionFinished: false
+    });
+    
+    activateBuzzerBtn.disabled = true;
+    activateBuzzerBtn.textContent = '📖 Reading Question...';
+    if (finishReadingBtn) {
+        finishReadingBtn.disabled = false;
+        finishReadingBtn.style.display = 'inline-block';
+    }
+    if (startBonusTimerBtn) startBonusTimerBtn.disabled = true;
+    
+    buzzedPlayer.textContent = '📖 Reading question - Players can interrupt at any time!';
+    buzzedPlayer.style.color = '#2196F3';
+    
+    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+    
+    // Hide timer until someone buzzes
+    if (timerDisplay) {
+        timerDisplay.style.display = 'none';
+    }
+});
+
+// Finish Reading button (question is complete)
+if (finishReadingBtn) {
+    finishReadingBtn.addEventListener('click', () => {
+        isReading = false;
+        questionFinished = true;
+        updateScoringControls();
         
-        document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+        database.ref('gameState').update({
+            isReading: false,
+            questionFinished: true,
+            buzzerActive: true // Keep buzzers active after question finished
+        });
+        
+        finishReadingBtn.disabled = true;
+        finishReadingBtn.style.display = 'none';
+        
+        buzzedPlayer.textContent = '✅ Question complete - Players can now buzz in (no interrupt penalty)';
+        buzzedPlayer.style.color = '#4CAF50';
     });
 }
 
@@ -245,6 +291,8 @@ if (startBonusTimerBtn) {
         }
         
         currentQuestionType = 'bonus';
+        isReading = true;
+        questionFinished = false;
         updateScoringControls();
         
         // Show which player gets the bonus
@@ -256,11 +304,13 @@ if (startBonusTimerBtn) {
         database.ref('gameState').update({
             buzzerActive: false,
             questionType: 'bonus',
-            bonusEligiblePlayer: bonusEligiblePlayer
+            bonusEligiblePlayer: bonusEligiblePlayer,
+            isReading: true,
+            questionFinished: false
         });
         
         startTimer(20);
-        startTossupTimerBtn.disabled = true;
+        activateBuzzerBtn.disabled = true;
         startBonusTimerBtn.disabled = true;
         
         scoringControls.style.display = 'block';
@@ -283,6 +333,8 @@ nextQuestionBtn.addEventListener('click', () => {
     // Reset to tossup mode
     currentQuestionType = 'tossup';
     bonusEligiblePlayer = null;
+    isReading = false;
+    questionFinished = false;
     updateScoringControls();
     
     database.ref('gameState').update({
@@ -292,12 +344,17 @@ nextQuestionBtn.addEventListener('click', () => {
         timerActive: false,
         timeRemaining: 0,
         questionType: 'tossup',
-        bonusEligiblePlayer: null
+        bonusEligiblePlayer: null,
+        isReading: false,
+        questionFinished: false
     });
     
     activateBuzzerBtn.disabled = false;
-    activateBuzzerBtn.textContent = '🔔 Ready for Tossup';
-    if (startTossupTimerBtn) startTossupTimerBtn.disabled = false;
+    activateBuzzerBtn.textContent = '🔔 Start Reading Question';
+    if (finishReadingBtn) {
+        finishReadingBtn.disabled = true;
+        finishReadingBtn.style.display = 'none';
+    }
     if (startBonusTimerBtn) startBonusTimerBtn.disabled = true;
     currentBuzzedPlayer = null;
     buzzedPlayer.textContent = 'Ready for next tossup question...';
@@ -325,31 +382,82 @@ function attachScoringListeners() {
                 btn.style.transform = 'scale(0.9)';
                 setTimeout(() => btn.style.transform = 'scale(1)', 100);
                 
-                if (action === 'correct' && points > 0) {
-                    // Correct tossup answer - enable bonus
+                const playerNum = currentBuzzedPlayer.replace('player', '');
+                
+                if (action === 'correct-interrupt' || action === 'correct-post') {
+                    // Correct answer - enable bonus
                     bonusEligiblePlayer = currentBuzzedPlayer;
-                    const playerNum = currentBuzzedPlayer.replace('player', '');
                     
-                    database.ref('gameState/bonusEligiblePlayer').set(bonusEligiblePlayer);
+                    database.ref('gameState').update({
+                        bonusEligiblePlayer: bonusEligiblePlayer,
+                        buzzerActive: false,
+                        isReading: false,
+                        questionFinished: false
+                    });
+                    
+                    stopTimer();
                     
                     buzzedPlayer.textContent = `✅ Correct! Player ${playerNum} earned +4 points. Start bonus timer to continue.`;
                     buzzedPlayer.style.color = '#4CAF50';
                     
                     // Enable bonus timer button
                     if (startBonusTimerBtn) startBonusTimerBtn.disabled = false;
-                    startTossupTimerBtn.disabled = true;
+                    activateBuzzerBtn.disabled = true;
+                    if (finishReadingBtn) {
+                        finishReadingBtn.disabled = true;
+                        finishReadingBtn.style.display = 'none';
+                    }
                     
                     // Hide tossup scoring, ready for bonus
                     scoringControls.style.display = 'none';
-                } else if (points < 0) {
-                    // Wrong interrupt
-                    const playerNum = currentBuzzedPlayer.replace('player', '');
-                    buzzedPlayer.textContent = `❌ Interrupt penalty! Player ${playerNum} loses 4 points.`;
+                    
+                } else if (action === 'wrong-interrupt') {
+                    // Wrong interrupt - deduct 4 points and continue reading
+                    buzzedPlayer.textContent = `❌ Wrong interrupt! Player ${playerNum} loses 4 points. Continue reading question...`;
                     buzzedPlayer.style.color = '#f44336';
                     
-                    // Can continue with same tossup or move to next
-                    startTossupTimerBtn.disabled = false;
+                    stopTimer();
+                    
+                    // Reactivate buzzers for other players to try
+                    database.ref('gameState').update({
+                        buzzerActive: true,
+                        buzzer: null,
+                        isReading: true,
+                        questionFinished: false
+                    });
+                    
+                    isReading = true;
+                    questionFinished = false;
+                    
+                    activateBuzzerBtn.disabled = true;
+                    activateBuzzerBtn.textContent = '📖 Reading Question...';
+                    if (finishReadingBtn) {
+                        finishReadingBtn.disabled = false;
+                        finishReadingBtn.style.display = 'inline-block';
+                    }
                     scoringControls.style.display = 'none';
+                    
+                    // Reset lights
+                    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
+                    
+                } else if (action === 'wrong-post') {
+                    // Wrong answer after question finished - no penalty
+                    buzzedPlayer.textContent = `❌ Wrong answer. Player ${playerNum} receives no points. Click "Next Question" or wait for other players.`;
+                    buzzedPlayer.style.color = '#f44336';
+                    
+                    stopTimer();
+                    
+                    // Reactivate buzzers for other players
+                    database.ref('gameState').update({
+                        buzzerActive: true,
+                        buzzer: null,
+                        questionFinished: true
+                    });
+                    
+                    scoringControls.style.display = 'none';
+                    
+                    // Reset lights
+                    document.querySelectorAll('.light').forEach(l => l.classList.remove('active'));
                 }
                 
             } else if (currentQuestionType === 'bonus') {
@@ -376,10 +484,19 @@ function attachScoringListeners() {
                 btn.style.transform = 'scale(0.9)';
                 setTimeout(() => btn.style.transform = 'scale(1)', 100);
                 
+                stopTimer();
+                
                 // Reset for next question
                 bonusEligiblePlayer = null;
-                startTossupTimerBtn.disabled = false;
-                startBonusTimerBtn.disabled = true;
+                database.ref('gameState').update({
+                    bonusEligiblePlayer: null,
+                    isReading: false,
+                    questionFinished: false
+                });
+                
+                activateBuzzerBtn.disabled = false;
+                activateBuzzerBtn.textContent = '🔔 Start Reading Question';
+                if (startBonusTimerBtn) startBonusTimerBtn.disabled = true;
                 scoringControls.style.display = 'none';
             }
         });
@@ -406,6 +523,8 @@ resetGameBtn.addEventListener('click', () => {
         // Reset to tossup mode
         currentQuestionType = 'tossup';
         bonusEligiblePlayer = null;
+        isReading = false;
+        questionFinished = false;
         updateScoringControls();
         
         database.ref('gameState').set({
@@ -422,12 +541,17 @@ resetGameBtn.addEventListener('click', () => {
             timerActive: false,
             timeRemaining: 0,
             questionType: 'tossup',
-            bonusEligiblePlayer: null
+            bonusEligiblePlayer: null,
+            isReading: false,
+            questionFinished: false
         });
         
         activateBuzzerBtn.disabled = false;
-        activateBuzzerBtn.textContent = '🔔 Ready for Tossup';
-        if (startTossupTimerBtn) startTossupTimerBtn.disabled = false;
+        activateBuzzerBtn.textContent = '🔔 Start Reading Question';
+        if (finishReadingBtn) {
+            finishReadingBtn.disabled = true;
+            finishReadingBtn.style.display = 'none';
+        }
         if (startBonusTimerBtn) startBonusTimerBtn.disabled = true;
         currentBuzzedPlayer = null;
         buzzedPlayer.textContent = 'Game reset! Ready for question 1.';

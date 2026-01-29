@@ -165,6 +165,16 @@
         #activateBuzzer:hover:not(:disabled) {
             background: #45a049;
         }
+
+        #finishReading {
+            background: #ff9800;
+            color: white;
+            display: none;
+        }
+
+        #finishReading:hover:not(:disabled) {
+            background: #e68900;
+        }
         
         .timer-controls {
             display: flex;
@@ -184,11 +194,11 @@
         }
         
         .timer-btn.bonus {
-            background: #ff9800;
+            background: #9c27b0;
         }
         
         .timer-btn.bonus:hover:not(:disabled) {
-            background: #e68900;
+            background: #7b1fa2;
         }
         
         #nextQuestion {
@@ -229,6 +239,7 @@
             display: flex;
             gap: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
         
         .point-btn {
@@ -239,10 +250,16 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s ease;
+            min-width: 200px;
         }
         
         .point-btn[data-points="-4"] {
             background: #f44336;
+            color: white;
+        }
+
+        .point-btn[data-points="0"] {
+            background: #757575;
             color: white;
         }
         
@@ -251,15 +268,43 @@
             color: white;
         }
         
-        .point-btn[data-points="10"],
-        .point-btn.bonus-correct {
+        .point-btn[data-points="10"] {
             background: #2196F3;
             color: white;
         }
-        
-        .point-btn.bonus-wrong {
-            background: #9E9E9E;
+
+        .bonus-correct {
+            background: #4CAF50 !important;
             color: white;
+        }
+
+        .bonus-wrong {
+            background: #757575 !important;
+            color: white;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #1976D2;
+            font-size: 1.1rem;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+            color: #555;
         }
     </style>
 </head>
@@ -294,6 +339,16 @@
                 <div class="score" id="score5">0</div>
             </div>
         </div>
+
+        <div class="info-box">
+            <h3>📋 Science Bowl Rules:</h3>
+            <ul>
+                <li><strong>Interrupt:</strong> Player buzzes during question reading → -4 if wrong, +4 if correct</li>
+                <li><strong>After Question:</strong> Player buzzes after question complete → 0 if wrong, +4 if correct</li>
+                <li><strong>Answer Time:</strong> 5 seconds to answer after buzzing</li>
+                <li><strong>Bonus:</strong> 20 seconds, +10 if correct, 0 if wrong (only for player who got tossup correct)</li>
+            </ul>
+        </div>
         
         <div class="status-panel">
             <div class="buzzer-status" id="buzzedPlayer">Waiting for buzz...</div>
@@ -305,23 +360,27 @@
             </div>
             
             <div class="controls">
+                <div class="control-row">
+                    <button id="activateBuzzer">🔔 Start Reading Question</button>
+                    <button id="finishReading">✅ Finish Reading Question</button>
+                </div>
+                
                 <div class="timer-controls">
-                    <button id="startTossupTimer" class="timer-btn">⏱️ Start Tossup (5s)</button>
-                    <button id="startBonusTimer" class="timer-btn bonus" disabled>⏱️ Start Bonus (20s)</button>
+                    <button id="startBonusTimer" class="timer-btn bonus">⏱️ Start Bonus Timer (20s)</button>
                 </div>
                 
                 <div class="control-row">
-                    <button id="activateBuzzer" disabled style="display:none;">🔔 Ready for Tossup</button>
                     <button id="nextQuestion">➡️ Next Question</button>
                     <button id="resetGame">🔄 Reset Game</button>
                 </div>
             </div>
             
             <div id="scoringControls" style="display: none;">
-                <div class="scoring-title">Tossup Scoring:</div>
+                <div class="scoring-title">Award Points:</div>
                 <div class="point-buttons">
-                    <button class="point-btn" data-points="-4">-4 (Interrupt/Wrong)</button>
-                    <button class="point-btn" data-points="4">+4 (Correct)</button>
+                    <button class="point-btn" data-points="-4">-4 (Wrong)</button>
+                    <button class="point-btn" data-points="4">+4 (Tossup)</button>
+                    <button class="point-btn" data-points="10">+10 (Bonus)</button>
                 </div>
             </div>
         </div>

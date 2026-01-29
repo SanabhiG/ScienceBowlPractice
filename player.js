@@ -108,12 +108,16 @@ database.ref('gameState').on('value', (snapshot) => {
     updateTimerDisplay(state.timeRemaining || 0, state.timerActive || false);
     
     // Show question status
-    if (state.isReading) {
-        questionDisplay.textContent = '🔊 Listen to the question...';
+    if (state.isReading && !state.questionFinished) {
+        questionDisplay.textContent = '🔊 Question being read - you can interrupt!';
         questionDisplay.style.display = 'block';
-    } else if (state.currentQuestion) {
-        questionDisplay.textContent = 'Question loaded. Waiting for moderator to read...';
+        questionDisplay.style.background = '#fff3cd';
+        questionDisplay.style.borderColor = '#ffc107';
+    } else if (state.questionFinished) {
+        questionDisplay.textContent = '✅ Question complete - buzz in to answer!';
         questionDisplay.style.display = 'block';
+        questionDisplay.style.background = '#d4edda';
+        questionDisplay.style.borderColor = '#28a745';
     } else {
         questionDisplay.style.display = 'none';
     }
@@ -124,8 +128,17 @@ database.ref('gameState').on('value', (snapshot) => {
         hasBuzzed = false;
         buzzer.disabled = false;
         buzzer.classList.remove('locked');
-        statusMessage.textContent = 'Ready to buzz!';
-        statusMessage.style.color = '#4CAF50';
+        
+        if (state.isReading && !state.questionFinished) {
+            statusMessage.textContent = '⚠️ Can interrupt (risk -4 points)';
+            statusMessage.style.color = '#ff9800';
+        } else if (state.questionFinished) {
+            statusMessage.textContent = '✅ Ready to buzz (no interrupt penalty)';
+            statusMessage.style.color = '#4CAF50';
+        } else {
+            statusMessage.textContent = 'Ready to buzz!';
+            statusMessage.style.color = '#4CAF50';
+        }
     } else {
         canBuzz = false;
         buzzer.disabled = true;
@@ -144,8 +157,13 @@ database.ref('gameState').on('value', (snapshot) => {
     
     // Check if this player buzzed in
     if (state.buzzer && state.buzzer.playerId === `player${playerId}`) {
-        statusMessage.textContent = '🎯 You buzzed in! Answer verbally to the moderator.';
-        statusMessage.style.color = '#2196F3';
+        if (state.isReading && !state.questionFinished) {
+            statusMessage.textContent = '⚠️ You interrupted! Answer now (5 seconds)';
+            statusMessage.style.color = '#ff9800';
+        } else {
+            statusMessage.textContent = '🎯 You buzzed in! Answer now (5 seconds)';
+            statusMessage.style.color = '#2196F3';
+        }
         buzzer.classList.add('locked');
         
         // Vibrate if available
@@ -154,9 +172,27 @@ database.ref('gameState').on('value', (snapshot) => {
         }
     } else if (state.buzzer && state.buzzer.playerId) {
         const buzzedPlayerNum = state.buzzer.playerId.replace('player', '');
-        statusMessage.textContent = `Player ${buzzedPlayerNum} buzzed in`;
+        statusMessage.textContent = `Player ${buzzedPlayerNum} is answering...`;
         statusMessage.style.color = '#ff9800';
         buzzer.classList.add('locked');
+    }
+
+    // Bonus question display
+    if (state.questionType === 'bonus' && state.bonusEligiblePlayer === `player${playerId}`) {
+        questionDisplay.textContent = '📝 Your bonus question - 20 seconds to confer and answer!';
+        questionDisplay.style.display = 'block';
+        questionDisplay.style.background = '#e3f2fd';
+        questionDisplay.style.borderColor = '#2196F3';
+        statusMessage.textContent = '📝 Listen to your bonus question';
+        statusMessage.style.color = '#2196F3';
+    } else if (state.questionType === 'bonus' && state.bonusEligiblePlayer) {
+        const bonusPlayerNum = state.bonusEligiblePlayer.replace('player', '');
+        questionDisplay.textContent = `Player ${bonusPlayerNum}'s bonus question in progress`;
+        questionDisplay.style.display = 'block';
+        questionDisplay.style.background = '#f5f5f5';
+        questionDisplay.style.borderColor = '#999';
+        statusMessage.textContent = `Waiting for Player ${bonusPlayerNum}'s bonus...`;
+        statusMessage.style.color = '#999';
     }
 });
 
